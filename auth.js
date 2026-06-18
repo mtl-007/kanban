@@ -4,8 +4,11 @@ const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── OAuth 리다이렉트 URL ───
 // 로컬 개발과 GitHub Pages 환경을 자동으로 감지
+// pathname이 '/' 인 경우 trailing slash를 제거해 Supabase Redirect URL과 정확히 일치시킴
 function getRedirectTo() {
-  return window.location.origin + window.location.pathname;
+  const { origin, pathname } = window.location;
+  const path = pathname === '/' ? '' : pathname.replace(/\/$/, '');
+  return origin + path;
 }
 
 // ─── UI 상태 전환 ───

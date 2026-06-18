@@ -1,0 +1,451 @@
+:root {
+  --color-todo-bg: #dbeafe;
+  --color-todo-border: #bfdbfe;
+  --color-inprogress-bg: #fef9c3;
+  --color-inprogress-border: #fde68a;
+  --color-done-bg: #dcfce7;
+  --color-done-border: #bbf7d0;
+
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-card-bg: #ffffff;
+  --color-drag-highlight: #3b82f6;
+  --color-danger: #ef4444;
+  --color-danger-bg: #fee2e2;
+  --color-btn-primary: #3b82f6;
+  --color-btn-primary-hover: #2563eb;
+
+  --radius-card: 8px;
+  --radius-column: 12px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Auth */
+  --color-login-overlay-bg: rgba(0, 0, 0, 0.55);
+  --color-google-btn: #ffffff;
+  --color-google-btn-border: #dadce0;
+  --color-github-btn: #24292f;
+  --color-github-btn-text: #ffffff;
+  --shadow-login-card: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: #f0f2f5;
+  color: var(--color-text-primary);
+  min-height: 100vh;
+}
+
+header {
+  background-color: #2c3e50;
+  color: #fff;
+  padding: 16px 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ─── 보드 레이아웃 ─── */
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  padding: 28px 32px;
+  align-items: flex-start;
+  min-height: calc(100vh - 60px);
+}
+
+/* ─── 컬럼 ─── */
+.column {
+  flex: 1;
+  min-width: 260px;
+  border-radius: var(--radius-column);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.2s;
+}
+
+.column[data-column="todo"] {
+  background-color: var(--color-todo-bg);
+  border: 2px solid var(--color-todo-border);
+}
+
+.column[data-column="inprogress"] {
+  background-color: var(--color-inprogress-bg);
+  border: 2px solid var(--color-inprogress-border);
+}
+
+.column[data-column="done"] {
+  background-color: var(--color-done-bg);
+  border: 2px solid var(--color-done-border);
+}
+
+.column.drag-over {
+  border-color: var(--color-drag-highlight);
+  border-style: dashed;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+}
+
+/* ─── 컬럼 헤더 ─── */
+.column-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.column-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--color-text-primary);
+}
+
+.card-count {
+  background-color: rgba(0, 0, 0, 0.12);
+  color: var(--color-text-primary);
+  border-radius: 12px;
+  padding: 1px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* ─── 카드 리스트 ─── */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 60px;
+}
+
+/* ─── 카드 ─── */
+.card {
+  position: relative;
+  background-color: var(--color-card-bg);
+  border-radius: var(--radius-card);
+  padding: 12px 36px 12px 14px;
+  box-shadow: var(--shadow-card);
+  cursor: grab;
+  transition: transform 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+.card:active {
+  cursor: grabbing;
+}
+
+.card.dragging {
+  opacity: 0.4;
+  transform: rotate(2deg);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.card-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.card-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 3px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: color 0.15s, background-color 0.15s, opacity 0.15s;
+}
+
+.card:hover .card-delete {
+  opacity: 1;
+}
+
+.card-delete:hover {
+  color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+}
+
+/* ─── 카드 추가 영역 ─── */
+.add-card-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.btn-add-card {
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: 2px dashed var(--color-text-muted);
+  border-radius: var(--radius-card);
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+
+.btn-add-card:hover {
+  border-color: var(--color-btn-primary);
+  color: var(--color-btn-primary);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.add-card-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-card-form[hidden] {
+  display: none;
+}
+
+.add-card-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.add-card-input:focus {
+  border-color: var(--color-btn-primary);
+}
+
+.add-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-confirm {
+  padding: 6px 14px;
+  background-color: var(--color-btn-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-confirm:hover {
+  background-color: var(--color-btn-primary-hover);
+}
+
+.btn-cancel {
+  padding: 6px 10px;
+  background: none;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.83rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-cancel:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* ─── 헤더 사용자 정보 ─── */
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-email {
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-signout {
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.83rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-signout:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ─── 로그인 오버레이 ─── */
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-login-overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.login-overlay[hidden] {
+  display: none;
+}
+
+.login-card {
+  background-color: var(--color-card-bg);
+  border-radius: var(--radius-column);
+  padding: 40px 36px;
+  box-shadow: var(--shadow-login-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.login-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn-oauth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: var(--radius-card);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: box-shadow 0.15s, filter 0.15s;
+}
+
+.btn-google {
+  background-color: var(--color-google-btn);
+  border: 1.5px solid var(--color-google-btn-border);
+  color: var(--color-text-primary);
+}
+
+.btn-google:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.btn-github {
+  background-color: var(--color-github-btn);
+  border: none;
+  color: var(--color-github-btn-text);
+}
+
+.btn-github:hover {
+  filter: brightness(1.2);
+}
+
+.login-error {
+  font-size: 0.8rem;
+  color: var(--color-danger);
+  text-align: center;
+  width: 100%;
+}
+
+.login-error[hidden] {
+  display: none;
+}
+
+/* ─── 칸반 보드 인증 전 숨김 ─── */
+.kanban-board[hidden] {
+  display: none;
+}
+
+/* ─── 반응형 ─── */
+@media (max-width: 768px) {
+  .kanban-board {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .column {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .user-email {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 20px;
+    margin: 0 16px;
+    max-width: calc(100% - 32px);
+  }
+}

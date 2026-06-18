@@ -28,7 +28,7 @@ OAuth 로그인        ┌──┴──────────────┐
 
 ---
 
-## 2. 카드 추가 플로우
+## 2. 카드 추가 플로우 (Phase 3 — DB 저장)
 
 ```
 컬럼 하단 [+ 카드 추가] 클릭
@@ -51,27 +51,36 @@ OAuth 로그인        ┌──┴──────────────┐
    └─── 유효하면
           │
           ▼
-       카드 DOM 생성 (createCard)
+       [추가] 버튼 비활성화 ("저장 중...")
           │
           ▼
-       해당 컬럼 .card-list에 추가
+       Supabase INSERT cards
+       (user_id, column_name, title, position)
           │
-          ▼
-       폼 숨김 / 버튼 복원
-          │
-          ▼
-       카운터 갱신 (updateCardCounts)
+     ┌────┴────────┐
+     │             │
+   성공           실패
+     │             │
+     ▼             ▼
+  카드 DOM 생성  버튼 복원
+  (.card-list)  (에러 콘솔)
+     │
+     ▼
+  폼 숨김 / 버튼 복원
+     │
+     ▼
+  카운터 갱신 (updateCardCounts)
 ```
 
 ---
 
-## 3. 카드 이동 플로우 (드래그 앤 드롭)
+## 3. 카드 이동 플로우 (Phase 3 — DB 반영)
 
 ```
 카드 위에서 마우스 버튼 누름 (dragstart)
         │
         ▼
-draggedCard 참조 저장
+draggedCard, draggedCardId(UUID) 저장
 requestAnimationFrame → .dragging 클래스 적용
         │
         ▼
@@ -86,23 +95,23 @@ requestAnimationFrame → .dragging 클래스 적용
    │                   │
    ▼                   ▼
 다른 컬럼이면       이동 없음
-카드 이동
-(appendChild)
+ DOM 이동 (낙관적 업데이트)
    │
    ▼
-.drag-over 제거
+.drag-over 제거 + 카운터 갱신
    │
-   ▼
-카운터 갱신
+   ▼ (비동기)
+Supabase UPDATE cards
+SET column_name = 새 컬럼, position = MAX+1
         │
         ▼ (dragend — 어디서 끝나든)
 .dragging 클래스 제거
-draggedCard = null
+draggedCard = null, draggedCardId = null
 ```
 
 ---
 
-## 4. 카드 삭제 플로우
+## 4. 카드 삭제 플로우 (Phase 3 — DB 반영)
 
 ```
 카드의 [×] 버튼 클릭
@@ -111,20 +120,81 @@ draggedCard = null
 이벤트 위임: .kanban-board click 핸들러
         │
         ▼
-.card-delete 클래스 확인
+card.dataset.cardId (UUID) 추출
         │
         ▼
-card.remove()
+Supabase DELETE cards WHERE id = UUID
         │
-        ▼
+   ┌────┴────────┐
+   │             │
+ 성공           실패
+   │             │
+   ▼             ▼
+card.remove()  에러 콘솔
+   │
+   ▼
 카운터 갱신 (updateCardCounts)
 ```
 
 ---
 
-## 5. Phase 2 — 인증 플로우 (구현됨)
+## 5. Phase 3 — 카드 데이터 로드 플로우 (구현됨)
 
-### 5.1 최초 접속 (비로그인)
+### 5.1 로그인 후 카드 로드
+
+```
+showBoard() 호출 (auth.js)
+    │
+    ▼
+boardVisible 플래그 확인
+    │
+    ├─── 이미 true → 중단 (중복 로드 방지)
+    │
+    └─── false → true로 설정
+              │
+              ▼
+         window.initBoard() 호출 (= app.js loadCards)
+              │
+              ▼
+         기존 .card DOM 초기화
+              │
+              ▼
+         Supabase SELECT cards
+         WHERE user_id = auth.uid()
+         ORDER BY position ASC, created_at ASC
+              │
+         ┌───┴──────────┐
+         │              │
+       성공            실패
+         │              │
+         ▼              ▼
+      컬럼별 DOM      에러 콘솔
+      렌더링          (보드는 빈 상태)
+         │
+         ▼
+      updateCardCounts()
+```
+
+### 5.2 새로고침 시 카드 유지
+
+```
+페이지 새로고침
+    │
+    ▼
+auth.js getSession() → localStorage 세션 존재
+    │
+    ▼
+showBoard() → initBoard() → loadCards()
+    │
+    ▼
+이전에 저장된 카드 그대로 표시
+```
+
+---
+
+## 6. Phase 2 — 인증 플로우 (구현됨)
+
+### 6.1 최초 접속 (비로그인)
 
 ```
 페이지 로드
@@ -139,7 +209,7 @@ showLogin()
   └─ header-user.hidden = true     (사용자 정보 숨김)
 ```
 
-### 5.2 OAuth 로그인
+### 6.2 OAuth 로그인
 
 ```
 [Google로 로그인] 또는 [GitHub로 로그인] 클릭
@@ -174,7 +244,7 @@ showBoard()
   └─ kanban-board.hidden = false   (보드 표시)
 ```
 
-### 5.3 세션 복원 (새로고침)
+### 6.3 세션 복원 (새로고침)
 
 ```
 페이지 로드
@@ -186,7 +256,7 @@ auth.js: getSession() → localStorage에 유효한 세션 존재
 updateHeaderUser() + showBoard() — 로그인 화면 없이 보드 즉시 표시
 ```
 
-### 5.4 로그아웃
+### 6.4 로그아웃
 
 ```
 헤더 [로그아웃] 클릭

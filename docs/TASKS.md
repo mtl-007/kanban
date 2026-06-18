@@ -43,26 +43,25 @@
 
 ---
 
-## Phase 3: 데이터 영속성 & 백엔드 API
+## Phase 3: 데이터 영속성 (Supabase DB)
 
-### 백엔드 API
+### 완료 ✅
 
-- [ ] 프로젝트 초기화 (Express 또는 FastAPI)
-- [ ] DB 스키마 생성 및 마이그레이션 스크립트
-  - [ ] `users` 테이블
-  - [ ] `boards` 테이블
-  - [ ] `columns` 테이블
-  - [ ] `cards` 테이블
-- [ ] 카드 CRUD API (`/api/cards`)
-  - [ ] GET (보드 전체 조회)
-  - [ ] POST (카드 생성)
-  - [ ] PATCH (카드 수정 / 컬럼 이동)
-  - [ ] DELETE (카드 삭제)
+- [x] `docs/supabase-schema.sql` — cards 테이블 DDL + RLS 4개 정책
+- [x] `app.js` DOM 직접 조작 → Supabase DB CRUD로 교체
+  - [x] `loadCards()` — 로그인 후 사용자 카드 전체 로드 및 렌더링
+  - [x] `saveNewCard()` — 카드 추가 시 DB insert, 저장 중 버튼 비활성화
+  - [x] `removeCard()` — 카드 삭제 시 DB delete
+  - [x] `updateCardColumn()` — 드래그 이동 시 DB column_name 업데이트
+  - [x] `window.initBoard = loadCards` 노출 (auth.js에서 showBoard 후 호출)
+- [x] `auth.js` — `boardVisible` 플래그로 중복 initBoard 호출 방지
+- [x] `index.html` — 정적 샘플 카드 6개 제거 (DB에서 동적 로드)
+- [x] 카드 DOM ID를 Supabase UUID 기반으로 전환 (`data-card-id`)
+- [x] RLS 정책: 사용자 본인 카드만 SELECT / INSERT / UPDATE / DELETE
 
-### 프론트엔드 연동
+### 수동 설정 필요 (Supabase Dashboard)
 
-- [ ] `app.js` DOM 직접 조작 → API 호출로 교체
-- [ ] `cardIdCounter` 방식 → DB id 방식으로 교체
+- [ ] SQL Editor에서 `docs/supabase-schema.sql` 실행
 
 ---
 

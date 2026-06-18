@@ -1,179 +1,119 @@
 # Database Design — 칸반보드
 
-> **현재(Phase 1)**: 데이터베이스 없음. 브라우저 메모리에만 존재하며 새로 고침 시 초기화됨.  
-> **Phase 2+**: MySQL 또는 PostgreSQL 연동을 목표로 아래 스키마를 선행 설계함.
+## 현재 구현 (Phase 3 — Supabase PostgreSQL)
+
+> Phase 3에서 Supabase PostgreSQL을 사용하는 `cards` 테이블을 구현했다.  
+> 컬럼이 3개로 고정된 현재 구조에서는 별도의 columns 테이블 없이  
+> `column_name` 텍스트 필드로 컬럼을 구분한다.
 
 ---
 
-## 1. ERD (개념)
+## 1. 실제 구현 스키마
 
-```
-users ──< boards ──< columns ──< cards
-  │                                │
-  └──── board_members ─────────────┘
-```
+### 1.1 `cards` (구현됨)
 
----
-
-## 2. 테이블 정의
-
-### 2.1 `users`
-
-사용자 계정 정보.
+사용자의 칸반 카드. Supabase Auth의 `auth.users`를 외래 키로 참조.
 
 | 컬럼 | 타입 | 제약 | 설명 |
 |------|------|------|------|
-| `id` | BIGINT UNSIGNED | PK, AUTO_INCREMENT | 사용자 ID |
-| `email` | VARCHAR(255) | UNIQUE, NOT NULL | 로그인 이메일 |
-| `password_hash` | VARCHAR(255) | NOT NULL | bcrypt 해시 |
-| `display_name` | VARCHAR(100) | NOT NULL | 표시 이름 |
-| `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 가입일시 |
-| `updated_at` | DATETIME | NOT NULL, DEFAULT NOW() ON UPDATE NOW() | 수정일시 |
+| `id` | uuid | PK, DEFAULT gen_random_uuid() | 카드 고유 ID |
+| `user_id` | uuid | FK → auth.users(id), NOT NULL, ON DELETE CASCADE | 소유 사용자 |
+| `column_name` | text | NOT NULL, CHECK IN ('todo','inprogress','done') | 소속 컬럼 |
+| `title` | varchar(50) | NOT NULL | 카드 제목 (최대 50자) |
+| `description` | text | NULL | 카드 상세 설명 |
+| `position` | integer | NOT NULL, DEFAULT 0 | 컬럼 내 표시 순서 |
+| `created_at` | timestamptz | NOT NULL, DEFAULT now() | 생성일시 |
+
+### 1.2 인덱스
+
+```sql
+CREATE INDEX idx_cards_user_column_position
+  ON public.cards (user_id, column_name, position ASC, created_at ASC);
+```
+
+### 1.3 Row Level Security (RLS)
+
+모든 데이터 접근은 RLS로 제어. 사용자는 자신의 카드만 접근 가능.
+
+| 정책 이름 | 대상 | 조건 |
+|-----------|------|------|
+| `cards_select_own` | SELECT | `auth.uid() = user_id` |
+| `cards_insert_own` | INSERT | `auth.uid() = user_id` |
+| `cards_update_own` | UPDATE | `auth.uid() = user_id` |
+| `cards_delete_own` | DELETE | `auth.uid() = user_id` |
+
+### 1.4 DDL (전체 — `docs/supabase-schema.sql` 참조)
+
+```sql
+CREATE TABLE public.cards (
+  id           uuid          DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id      uuid          NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  column_name  text          NOT NULL CHECK (column_name IN ('todo', 'inprogress', 'done')),
+  title        varchar(50)   NOT NULL,
+  description  text,
+  position     integer       NOT NULL DEFAULT 0,
+  created_at   timestamptz   NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
+```
 
 ---
+
+## 2. 향후 확장 스키마 (Phase 4+ 계획)
+
+> 다중 보드, 동적 컬럼, 팀 협업 기능 구현 시 아래 스키마로 확장한다.
+
+### 2.1 ERD (목표)
+
+```
+auth.users ──< boards ──< columns ──< cards
+     │                                  │
+     └──────── board_members ───────────┘
+```
 
 ### 2.2 `boards`
 
-칸반보드 단위.
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| `id` | BIGINT UNSIGNED | PK, AUTO_INCREMENT | 보드 ID |
-| `owner_id` | BIGINT UNSIGNED | FK → users.id, NOT NULL | 소유자 |
-| `title` | VARCHAR(200) | NOT NULL | 보드 이름 |
-| `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 생성일시 |
-| `updated_at` | DATETIME | NOT NULL, DEFAULT NOW() ON UPDATE NOW() | 수정일시 |
-
----
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | uuid | PK |
+| `owner_id` | uuid | FK → auth.users(id) |
+| `title` | varchar(200) | 보드 이름 |
+| `created_at` | timestamptz | 생성일시 |
 
 ### 2.3 `columns`
 
-보드 내 컬럼(TO-DO, In-Progress, Done 등).
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `id` | uuid | PK |
+| `board_id` | uuid | FK → boards(id) |
+| `name` | varchar(100) | 컬럼 이름 |
+| `position` | integer | 표시 순서 |
+| `created_at` | timestamptz | 생성일시 |
 
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| `id` | BIGINT UNSIGNED | PK, AUTO_INCREMENT | 컬럼 ID |
-| `board_id` | BIGINT UNSIGNED | FK → boards.id, NOT NULL | 소속 보드 |
-| `name` | VARCHAR(100) | NOT NULL | 컬럼 이름 |
-| `position` | SMALLINT UNSIGNED | NOT NULL, DEFAULT 0 | 표시 순서 |
-| `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 생성일시 |
+### 2.4 `cards` (확장)
 
-> `position`은 컬럼 순서 변경을 위해 사용. (position ASC 정렬)
+현재 `column_name` 텍스트 필드를 `column_id` FK로 교체.
 
----
+| 변경 | 현재 | 확장 후 |
+|------|------|---------|
+| 컬럼 식별 | `column_name text` | `column_id uuid FK→columns(id)` |
+| 사용자 식별 | `user_id` (직접) | `created_by uuid FK→users(id)` |
 
-### 2.4 `cards`
+### 2.5 `board_members`
 
-컬럼 내 카드.
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| `id` | BIGINT UNSIGNED | PK, AUTO_INCREMENT | 카드 ID |
-| `column_id` | BIGINT UNSIGNED | FK → columns.id, NOT NULL | 소속 컬럼 |
-| `title` | VARCHAR(50) | NOT NULL | 카드 제목 (최대 50자) |
-| `description` | TEXT | NULL | 카드 상세 설명 |
-| `position` | INT UNSIGNED | NOT NULL, DEFAULT 0 | 컬럼 내 순서 |
-| `created_by` | BIGINT UNSIGNED | FK → users.id, NULL | 생성자 |
-| `created_at` | DATETIME | NOT NULL, DEFAULT NOW() | 생성일시 |
-| `updated_at` | DATETIME | NOT NULL, DEFAULT NOW() ON UPDATE NOW() | 수정일시 |
-
-> 카드 이동(컬럼 변경): `column_id` 업데이트.  
-> 컬럼 내 순서 변경: `position` 업데이트.
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| `board_id` | uuid | PK(복합), FK → boards(id) |
+| `user_id` | uuid | PK(복합), FK → auth.users(id) |
+| `role` | text | 'admin' / 'member' / 'viewer' |
+| `joined_at` | timestamptz | 참여일시 |
 
 ---
 
-### 2.5 `board_members` (Phase 2+ 협업 기능)
+## 3. Phase 3 → Phase 4 마이그레이션 전략
 
-보드 공유 멤버.
-
-| 컬럼 | 타입 | 제약 | 설명 |
-|------|------|------|------|
-| `board_id` | BIGINT UNSIGNED | PK(복합), FK → boards.id | 보드 |
-| `user_id` | BIGINT UNSIGNED | PK(복합), FK → users.id | 멤버 |
-| `role` | ENUM('admin','member','viewer') | NOT NULL, DEFAULT 'member' | 권한 |
-| `joined_at` | DATETIME | NOT NULL, DEFAULT NOW() | 참여일시 |
-
----
-
-## 3. 인덱스
-
-```sql
--- cards: 컬럼별 카드 목록 조회 (position 정렬 포함)
-CREATE INDEX idx_cards_column_position ON cards (column_id, position);
-
--- columns: 보드별 컬럼 조회
-CREATE INDEX idx_columns_board_position ON columns (board_id, position);
-
--- board_members: 사용자별 보드 목록 조회
-CREATE INDEX idx_board_members_user ON board_members (user_id);
-```
-
----
-
-## 4. DDL (MySQL / PostgreSQL 공통 기준)
-
-```sql
-CREATE TABLE users (
-  id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  email         VARCHAR(255)    NOT NULL UNIQUE,
-  password_hash VARCHAR(255)    NOT NULL,
-  display_name  VARCHAR(100)    NOT NULL,
-  created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
-CREATE TABLE boards (
-  id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  owner_id   BIGINT UNSIGNED NOT NULL,
-  title      VARCHAR(200)    NOT NULL,
-  created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE columns (
-  id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  board_id   BIGINT UNSIGNED  NOT NULL,
-  name       VARCHAR(100)     NOT NULL,
-  position   SMALLINT UNSIGNED NOT NULL DEFAULT 0,
-  created_at DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
-  INDEX idx_columns_board_position (board_id, position)
-);
-
-CREATE TABLE cards (
-  id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  column_id   BIGINT UNSIGNED NOT NULL,
-  title       VARCHAR(50)     NOT NULL,
-  description TEXT,
-  position    INT UNSIGNED    NOT NULL DEFAULT 0,
-  created_by  BIGINT UNSIGNED,
-  created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (column_id)  REFERENCES columns(id) ON DELETE CASCADE,
-  FOREIGN KEY (created_by) REFERENCES users(id)   ON DELETE SET NULL,
-  INDEX idx_cards_column_position (column_id, position)
-);
-
-CREATE TABLE board_members (
-  board_id  BIGINT UNSIGNED NOT NULL,
-  user_id   BIGINT UNSIGNED NOT NULL,
-  role      ENUM('admin','member','viewer') NOT NULL DEFAULT 'member',
-  joined_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (board_id, user_id),
-  FOREIGN KEY (board_id) REFERENCES boards(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
-  INDEX idx_board_members_user (user_id)
-);
-```
-
-> PostgreSQL 사용 시: `AUTO_INCREMENT` → `GENERATED ALWAYS AS IDENTITY`, `ON UPDATE CURRENT_TIMESTAMP` → 트리거로 대체.
-
----
-
-## 5. Phase 1 → Phase 2 마이그레이션 전략
-
-1. 현재 HTML에 하드코딩된 초기 카드 6장을 DB seed 데이터로 이관
-2. `app.js`의 직접 DOM 조작 로직을 API 호출로 교체
-3. `cardIdCounter` 방식 대신 DB의 AUTO_INCREMENT id 사용
-4. LocalStorage를 임시 캐시로 활용하다가 API 안정화 후 제거 가능
+1. `boards` 테이블 생성 → 기존 사용자당 기본 보드 1개 seed
+2. `columns` 테이블 생성 → todo/inprogress/done 컬럼 3개 seed
+3. `cards.column_name` → `cards.column_id` 마이그레이션 (컬럼명→UUID 매핑)
+4. `app.js` loadCards 쿼리를 `boards/columns JOIN` 방식으로 교체

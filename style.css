@@ -1,3 +1,4 @@
+/* ─── Phase 4 추가 변수 ─── */
 :root {
   --color-todo-bg: #dbeafe;
   --color-todo-border: #bfdbfe;
@@ -20,6 +21,15 @@
   --radius-column: 12px;
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12);
   --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Phase 4: 공유 + 활동 로그 */
+  --color-invite-banner-bg: #eff6ff;
+  --color-invite-banner-border: #bfdbfe;
+  --color-activity-added: #16a34a;
+  --color-activity-deleted: #ef4444;
+  --color-activity-moved: #d97706;
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.22);
+  --shadow-panel: -2px 0 12px rgba(0, 0, 0, 0.08);
 
   /* Auth */
   --color-login-overlay-bg: rgba(0, 0, 0, 0.55);
@@ -559,6 +569,354 @@ header h1 {
   display: none;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Phase 4: 팀 공유 + 활동 로그 스타일
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── 보드 래퍼 ─── */
+.board-wrapper {
+  display: flex;
+  align-items: flex-start;
+}
+
+.board-wrapper.panel-open .kanban-board {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ─── 헤더: 보드 선택 + 공유/로그 버튼 ─── */
+.board-selector {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.83rem;
+  font-family: inherit;
+  padding: 5px 10px;
+  cursor: pointer;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.board-context-label {
+  font-size: 0.78rem;
+  color: #93c5fd;
+  white-space: nowrap;
+}
+
+.btn-share,
+.btn-activity {
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.83rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-share:hover,
+.btn-activity:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.btn-activity.active {
+  background: var(--color-btn-primary);
+  border-color: transparent;
+}
+
+/* ─── 초대 알림 배너 ─── */
+.invite-banner {
+  background: var(--color-invite-banner-bg);
+  border-bottom: 2px solid var(--color-invite-banner-border);
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 0.88rem;
+  color: var(--color-text-primary);
+}
+
+.invite-banner[hidden] { display: none; }
+
+.invite-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-invite-accept {
+  padding: 5px 14px;
+  background: var(--color-btn-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.83rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-invite-accept:hover { background: var(--color-btn-primary-hover); }
+
+.btn-invite-decline {
+  padding: 5px 14px;
+  background: none;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.83rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-invite-decline:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* ─── 공유 모달 ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-login-overlay-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+}
+
+.modal-overlay[hidden] { display: none; }
+
+.modal-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-column);
+  padding: 28px 32px;
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.modal-close:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.share-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.share-invite-row {
+  display: flex;
+  gap: 8px;
+}
+
+.share-email-input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.share-email-input:focus { border-color: var(--color-btn-primary); }
+
+.btn-invite-send {
+  padding: 8px 16px;
+  background: var(--color-btn-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.btn-invite-send:hover    { background: var(--color-btn-primary-hover); }
+.btn-invite-send:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.share-invite-msg         { font-size: 0.8rem; margin-top: 6px; }
+.share-invite-msg[hidden] { display: none; }
+.share-invite-msg.success { color: #16a34a; }
+.share-invite-msg.error   { color: var(--color-danger); }
+
+.share-member-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 20px;
+}
+
+.share-member-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: var(--radius-card);
+  font-size: 0.88rem;
+}
+
+.share-member-email { flex: 1; color: var(--color-text-primary); }
+
+.share-member-status {
+  font-size: 0.73rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.share-member-status.pending  { background: #fef9c3; color: #a16207; }
+.share-member-status.accepted { background: #dcfce7; color: #16a34a; }
+
+.btn-member-remove {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 3px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: color 0.15s, background-color 0.15s, opacity 0.15s;
+}
+
+.share-member-item:hover .btn-member-remove { opacity: 1; }
+
+.btn-member-remove:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+/* ─── 활동 로그 패널 ─── */
+.activity-panel {
+  position: relative;
+  z-index: 10;
+  width: 300px;
+  flex-shrink: 0;
+  background: var(--color-card-bg);
+  border-left: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 60px);
+  box-shadow: var(--shadow-panel);
+}
+
+.activity-panel[hidden] { display: none; }
+
+.activity-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.activity-panel-header h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.activity-panel-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0 3px;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+}
+
+.activity-panel-close:hover { background: #f1f5f9; }
+
+.activity-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.activity-item {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.activity-item:last-child { border-bottom: none; }
+
+.activity-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.activity-icon.added   { background: #dcfce7; color: var(--color-activity-added); }
+.activity-icon.deleted { background: #fee2e2; color: var(--color-activity-deleted); }
+.activity-icon.moved   { background: #fef9c3; color: var(--color-activity-moved); }
+
+.activity-body   { color: var(--color-text-primary); }
+.activity-actor  { font-weight: 600; }
+.activity-time   { display: block; color: var(--color-text-muted); font-size: 0.72rem; margin-top: 3px; }
+
 /* ─── 반응형 ─── */
 @media (max-width: 768px) {
   .kanban-board {
@@ -573,6 +931,16 @@ header h1 {
 
   .user-email {
     display: none;
+  }
+
+  .board-selector    { max-width: 110px; }
+  .board-context-label { display: none; }
+  .activity-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 800;
   }
 }
 

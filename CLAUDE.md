@@ -35,3 +35,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 작업 후 검증 시 **Playwright를 사용하지 않습니다**.
 - 브라우저에서 `index.html`을 직접 열어 수동으로 확인하거나, `open`/`xdg-open` 등으로 실행합니다.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->

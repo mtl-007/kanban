@@ -12,15 +12,23 @@ function getRedirectTo() {
 }
 
 // ─── UI 상태 전환 ───
+let boardVisible = false;
+
 function showLogin() {
+  boardVisible = false;
   document.getElementById('login-overlay').hidden = false;
   document.querySelector('.kanban-board').hidden = true;
   document.getElementById('header-user').hidden = true;
 }
 
 function showBoard() {
+  if (boardVisible) return;
+  boardVisible = true;
   document.getElementById('login-overlay').hidden = true;
   document.querySelector('.kanban-board').hidden = false;
+  if (typeof window.initBoard === 'function') {
+    window.initBoard();
+  }
 }
 
 function updateHeaderUser(user) {

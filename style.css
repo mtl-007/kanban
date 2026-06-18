@@ -420,6 +420,140 @@ header h1 {
   display: none;
 }
 
+/* ─── 인증 탭 ─── */
+.auth-tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 4px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.auth-tab.active {
+  color: var(--color-btn-primary);
+  border-bottom-color: var(--color-btn-primary);
+}
+
+/* ─── 이메일 인증 폼 ─── */
+.email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: var(--radius-card);
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.auth-input:focus {
+  border-color: var(--color-btn-primary);
+}
+
+.auth-input[hidden] {
+  display: none;
+}
+
+.email-check-msg {
+  font-size: 0.78rem;
+  padding: 0 2px;
+}
+
+.email-check-msg[hidden] {
+  display: none;
+}
+
+.email-check-msg[data-type="taken"] {
+  color: var(--color-danger);
+}
+
+.email-check-msg[data-type="checking"] {
+  color: var(--color-text-secondary);
+}
+
+.auth-error {
+  font-size: 0.82rem;
+  color: var(--color-danger);
+  text-align: center;
+}
+
+.auth-error[hidden] {
+  display: none;
+}
+
+.auth-message {
+  font-size: 0.82rem;
+  color: #16a34a;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.auth-message[hidden] {
+  display: none;
+}
+
+.btn-email-submit {
+  width: 100%;
+  padding: 11px;
+  background-color: var(--color-btn-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-card);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-email-submit:hover {
+  background-color: var(--color-btn-primary-hover);
+}
+
+.btn-email-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── 소셜 구분선 ─── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: #e2e8f0;
+}
+
 /* ─── 칸반 보드 인증 전 숨김 ─── */
 .kanban-board[hidden] {
   display: none;

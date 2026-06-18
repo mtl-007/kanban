@@ -20,7 +20,28 @@
   <div class="login-overlay" id="login-overlay">
     <div class="login-card">
       <h1 class="login-title">칸반 보드</h1>
-      <p class="login-subtitle">작업을 관리하려면 로그인하세요.</p>
+
+      <!-- 로그인 / 회원가입 탭 -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" data-tab="signin" type="button">로그인</button>
+        <button class="auth-tab" data-tab="signup" type="button">회원가입</button>
+      </div>
+
+      <!-- 이메일 인증 폼 -->
+      <div class="email-form">
+        <input class="auth-input" type="email" id="auth-email" placeholder="이메일" autocomplete="email">
+        <p class="email-check-msg" id="email-check-msg" hidden></p>
+        <input class="auth-input" type="password" id="auth-password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+        <input class="auth-input" type="password" id="auth-confirm" placeholder="비밀번호 확인" autocomplete="new-password" hidden>
+        <p class="auth-error" id="auth-error" hidden></p>
+        <p class="auth-message" id="auth-message" hidden></p>
+        <button class="btn-email-submit" id="btn-email-submit" type="button">로그인</button>
+      </div>
+
+      <!-- 구분선 -->
+      <div class="auth-divider"><span>또는</span></div>
+
+      <!-- 소셜 로그인 -->
       <div class="login-buttons">
         <button class="btn-oauth btn-google" id="btn-google">
           <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
@@ -38,6 +59,7 @@
           GitHub로 로그인
         </button>
       </div>
+
       <p class="login-error" id="login-error" hidden></p>
     </div>
   </div>

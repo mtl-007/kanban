@@ -35,16 +35,15 @@ function showLogin() {
   document.getElementById('login-overlay').hidden = false;
   document.querySelector('.kanban-board').hidden  = true;
   document.getElementById('header-user').hidden   = true;
-  if (typeof window.resetBoard === 'function') window.resetBoard();
   resetEmailForm();
 }
 
-function showBoard(user) {
+function showBoard() {
   if (boardVisible) return;
   boardVisible = true;
   document.getElementById('login-overlay').hidden = true;
   document.querySelector('.kanban-board').hidden  = false;
-  if (typeof window.initBoard === 'function') window.initBoard(user);
+  if (typeof window.initBoard === 'function') window.initBoard();
 }
 
 function updateHeaderUser(user) {
@@ -248,44 +247,17 @@ async function signOut() {
 
 // ─── 초기화 ───
 document.addEventListener('DOMContentLoaded', () => {
-
-  // OAuth 팝업 창인 경우: 세션 확인 후 부모 창에 알리고 닫기
-  if (window.opener && !window.opener.closed) {
-    let handled = false;
-    function closePopupWithSession(session) {
-      if (handled) return;
-      handled = true;
-      if (session && !window.opener.closed) {
-        window.opener.postMessage({ type: 'oauth-complete' }, window.location.origin);
-      }
-      window.close();
-    }
-    supabaseClient.auth.onAuthStateChange((_event, session) => closePopupWithSession(session));
-    supabaseClient.auth.getSession().then(({ data: { session } }) => closePopupWithSession(session));
-    return;
-  }
-
   initEmailAuth();
 
   document.getElementById('btn-google').addEventListener('click', () => signInWithOAuthPopup('google'));
   document.getElementById('btn-github').addEventListener('click', () => signInWithOAuthPopup('github'));
   document.getElementById('btn-signout').addEventListener('click', signOut);
 
-  // OAuth 팝업 완료 수신 → 세션 갱신 후 보드 표시
-  window.addEventListener('message', async (e) => {
-    if (e.origin !== window.location.origin || e.data?.type !== 'oauth-complete') return;
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-      updateHeaderUser(session.user);
-      showBoard(session.user);
-    }
-  });
-
-  // 세션 변경 처리 (로그아웃, 다른 탭 로그인 등)
+  // OAuth 팝업 완료 감지 및 세션 변경 처리
   supabaseClient.auth.onAuthStateChange((_event, session) => {
     if (session) {
       updateHeaderUser(session.user);
-      showBoard(session.user);
+      showBoard();
     } else {
       showLogin();
     }
@@ -295,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
   supabaseClient.auth.getSession().then(({ data: { session } }) => {
     if (session) {
       updateHeaderUser(session.user);
-      showBoard(session.user);
+      showBoard();
     } else {
       showLogin();
     }

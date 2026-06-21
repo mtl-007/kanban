@@ -10,11 +10,26 @@
   <header>
     <h1>칸반 보드</h1>
     <div class="header-user" id="header-user" hidden>
+      <select class="board-selector" id="board-selector" title="보드 선택">
+        <option value="own">내 보드</option>
+      </select>
+      <span class="board-context-label" id="board-context-label" hidden></span>
       <img class="user-avatar" id="user-avatar" src="" alt="프로필" width="32" height="32">
       <span class="user-email" id="user-email"></span>
-      <button class="btn-signout" id="btn-signout">로그아웃</button>
+      <button class="btn-share"    id="btn-share">공유</button>
+      <button class="btn-activity" id="btn-activity">활동 로그</button>
+      <button class="btn-signout"  id="btn-signout">로그아웃</button>
     </div>
   </header>
+
+  <!-- 초대 알림 배너 -->
+  <div class="invite-banner" id="invite-banner" hidden>
+    <span id="invite-banner-msg"></span>
+    <div class="invite-banner-actions">
+      <button class="btn-invite-accept"  id="btn-invite-accept">수락</button>
+      <button class="btn-invite-decline" id="btn-invite-decline">거절</button>
+    </div>
+  </div>
 
   <!-- 로그인 오버레이 (미인증 시 표시) -->
   <div class="login-overlay" id="login-overlay">
@@ -64,6 +79,7 @@
     </div>
   </div>
 
+  <div class="board-wrapper" id="board-wrapper">
   <main class="kanban-board">
     <!-- TO-DO 컬럼 -->
     <section class="column" data-column="todo">
@@ -122,6 +138,38 @@
       </div>
     </section>
   </main>
+
+  <!-- 활동 로그 패널 -->
+  <aside class="activity-panel" id="activity-panel" hidden>
+    <div class="activity-panel-header">
+      <h2>활동 로그</h2>
+      <button class="activity-panel-close" id="activity-panel-close" aria-label="닫기">×</button>
+    </div>
+    <ul class="activity-list" id="activity-list"></ul>
+  </aside>
+  </div><!-- /.board-wrapper -->
+
+  <!-- 공유 모달 -->
+  <div class="modal-overlay" id="share-modal" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>보드 공유</h2>
+        <button class="modal-close" id="share-modal-close" aria-label="닫기">×</button>
+      </div>
+      <div class="share-invite-section">
+        <h3 class="share-section-title">멤버 초대</h3>
+        <div class="share-invite-row">
+          <input class="share-email-input" id="share-email-input" type="email" placeholder="초대할 이메일 주소">
+          <button class="btn-invite-send" id="btn-invite-send">초대</button>
+        </div>
+        <p class="share-invite-msg" id="share-invite-msg" hidden></p>
+      </div>
+      <div class="share-members-section">
+        <h3 class="share-section-title">현재 멤버</h3>
+        <ul class="share-member-list" id="share-member-list"></ul>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="config.js" defer></script>
